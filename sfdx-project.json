@@ -1,0 +1,17 @@
+{
+    "packageDirectories": [
+        {
+            "path": "force-app",
+            "default": true,
+            "package": "EB Tools - Callout Utilities",
+            "versionNumber": "0.1.0.NEXT"
+        }
+    ],
+    "name": "EB Tools - Callout Utilities",
+    "namespace": "ebtls",
+    "sfdcLoginUrl": "https://login.salesforce.com",
+    "sourceApiVersion": "56.0",
+    "packageAliases": {
+        "EB Tools - Callout Utilities": "0Ho5G000000fxXpSAI"
+    }
+}
