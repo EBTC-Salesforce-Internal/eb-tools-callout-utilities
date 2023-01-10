@@ -153,7 +153,7 @@ global class MockServer implements HttpCalloutMock{
 
         @testVisible
         private RequestSpec(){
-            this.endpointSpecs = new List<HeaderRequestSpec>();
+            this.endpointSpecs = new List<EndpointRequestSpec>();
             this.headerSpecs = new List<HeaderRequestSpec>();
             this.bodySpecs = new List<BodyRequestSpec>();
         }
@@ -347,8 +347,10 @@ global class MockServer implements HttpCalloutMock{
             if(requestSpec.method != null && requestSpec.method != request.getMethod()){
                 return false;
             }
-            if(requestSpec.endpointSpec != null && requestSpec.endpointSpec.verifyValue(request.getEndpoint()) == false){
-                return false;
+            for(EndpointRequestSpec endpointSpec:requestSpec.endpointSpecs){
+                if(endpointSpec.verifyValue(request.getEndpoint()) == false){
+                    return false;
+                }
             }
             for(HeaderRequestSpec headerSpec:requestSpec.headerSpecs){
                 if(headerSpec.verifyValue(request.getHeader(headerSpec.headerKey)) == false){
