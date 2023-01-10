@@ -147,12 +147,13 @@ global class MockServer implements HttpCalloutMock{
      */
     global class RequestSpec{
         private String method;
-        private EndpointRequestSpec endpointSpec;
+        private List<EndpointRequestSpec> endpointSpecs;
         private List<HeaderRequestSpec> headerSpecs;
         private List<BodyRequestSpec> bodySpecs;
 
         @testVisible
         private RequestSpec(){
+            this.endpointSpecs = new List<HeaderRequestSpec>();
             this.headerSpecs = new List<HeaderRequestSpec>();
             this.bodySpecs = new List<BodyRequestSpec>();
         }
@@ -163,8 +164,9 @@ global class MockServer implements HttpCalloutMock{
         }
 
         global EndpointRequestSpec endpoint(){
-            this.endpointSpec = new EndpointRequestSpec(this);
-            return this.endpointSpec;
+            EndpointRequestSpec endpointSpec = new EndpointRequestSpec(this);
+            endpointSpecs.add(endpointSpec);
+            return endpointSpec;
         }
 
         global HeaderRequestSpec header(String headerKey){
