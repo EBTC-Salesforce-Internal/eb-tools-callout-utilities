@@ -6,6 +6,18 @@ The EB Tools - Callout Utilities package provides helpful contructs to streamlin
 
 These utilities utilize method chaining as a way to increase the readability of code.
 
+## Installation
+
+A managed package version is available to install [here](https://login.salesforce.com/packaging/installPackage.apexp?p0=04t5G000004TtU5QAK).
+
+To install via Salesforce DX, run the following command
+
+```Command Line
+sfdx force:package:install -i 04t5G000004TtU5QAK -u <alias or username>
+```
+
+## Usage
+
 ### Http Request Builder
 
 There are several factory methods on the HttpRequestBuilder used to initialize the request specification with one of two required pieces of information: the method. Methods include `get()`, `post()`, `patch()`, `put()`, and `del()` (delete is a reserved word in Apex). `HttpRequestBuilder.init(String method)` can also be used.
