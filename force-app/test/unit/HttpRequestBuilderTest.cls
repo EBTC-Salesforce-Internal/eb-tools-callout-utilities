@@ -20,6 +20,26 @@ public with sharing class HttpRequestBuilderTest {
     }
 
     @isTest
+    public static void verifyRequestMethods_NamedCredential(){
+        Test.startTest();
+
+        HttpRequest req = HttpRequestBuilder.init('GET')
+            .namedCredential('namedCredential')
+            .endpoint('/sample/test')
+            .timeout(120000)
+            .header('Authorization','Bearer token')
+            .body('{}')
+            .compressed(true)
+            .build();
+
+        Test.stopTest();
+
+        System.assertEquals(req.getEndpoint(), 'callout:namedCredential/sample/test', 'Endpoint does not match');
+        System.assertEquals(req.getHeader('Authorization'), 'Bearer token', 'Header does not match');
+        System.assertEquals(req.getCompressed(), true, 'Compression attribute does not match');
+    }
+
+    @isTest
     public static void requestMethods(){
         HttpRequest req;
 

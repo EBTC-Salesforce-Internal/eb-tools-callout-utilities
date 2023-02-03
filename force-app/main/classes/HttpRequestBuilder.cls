@@ -2,6 +2,9 @@ global virtual class HttpRequestBuilder {
     private static Http httpService = new Http();
     private HttpRequest request;
 
+    private String namedCredential;
+    private String endpoint;
+
     private HttpRequestBuilder(String method) {
         this.request = new HttpRequest();
         this.request.setMethod(method);
@@ -31,9 +34,27 @@ global virtual class HttpRequestBuilder {
         return new HttpRequestBuilder(method);
     }
 
-    global HttpRequestBuilder endpoint(String value){
-        this.request.setEndpoint(value);
+    global HttpRequestBuilder namedCredential(String namedCredential){
+        this.namedCredential = namedCredential;
+        buildEndpoint();
         return this;
+    }
+
+    global HttpRequestBuilder endpoint(String value){
+        this.endpoint = value;
+        buildEndpoint();
+        return this;
+    }
+
+    private void buildEndpoint(){
+        String fqdn = '';
+        if(namedCredential != null){
+            fqdn += 'callout:' + namedCredential;
+        }
+        if(endpoint != null){
+            fqdn += endpoint;
+        }
+        this.request.setEndpoint(fqdn);
     }
 
     global HttpRequestBuilder timeout(Integer value){
