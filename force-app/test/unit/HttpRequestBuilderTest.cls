@@ -72,4 +72,28 @@ public with sharing class HttpRequestBuilderTest {
 
         System.assertNotEquals(req.getBodyDocument(), null, 'Document not returned.');
     }
+
+    @isTest
+    public static void requestMultiPart_Simple(){
+        HttpRequest req;
+
+        Test.startTest();
+
+        req = HttpRequestBuilder.init('POST')
+            .multipartBody()
+            .addField('type','sampleType')
+            .addField('value', '{}', 'application/json')
+            .setMultipartBody()
+            .build();
+
+        Test.stopTest();
+
+        Assert.isTrue(req.getHeader('ContentType').contains('multipart/form-data; boundary='));
+
+        String body = req.getBody();
+        Assert.isTrue(body.startsWith('-------xxx'));
+        Assert.isTrue(body.contains('Content-Disposition: form-data; name="type"\r\n\r\nsampleType'));
+        Assert.isTrue(body.contains('Content-Disposition: form-data; name="value"\nContent-Type: application/json\r\n\r\n{}'));
+        Assert.isTrue(body.endsWith('xxx-------'));
+    }
 }

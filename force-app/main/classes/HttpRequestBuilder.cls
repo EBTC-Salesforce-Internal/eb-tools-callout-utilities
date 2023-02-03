@@ -71,11 +71,128 @@ global virtual class HttpRequestBuilder {
         return this;
     }
 
+    global MultipartBodyBuilder multipartBody(){
+        return new MultipartBodyBuilder(this);
+    }
+
     global HttpRequest build(){
         return request;
     }
 
     global HttpResponse send(){
         return httpService.send(request);
+    }
+
+    global class MultipartBodyBuilder{
+        private HttpRequestBuilder reqBuilder;
+        private String boundary;
+        private String body;
+        private Boolean encoded = false;
+        private String boundaryPrefix = '';
+
+        private MultipartBodyBuilder(HttpRequestBuilder reqBuilder){
+            this.reqBuilder = reqBuilder;
+
+            boundary = '-----xxx-----' + DateTime.now().getTime() + '-----xxx-----';
+            reqBuilder.header('ContentType', 'multipart/form-data; boundary=' + boundary);
+
+            body = '';
+        }
+
+        global MultipartBodyBuilder addField(String name, String value){
+            return addField(name, value, null);
+        }
+
+        global MultipartBodyBuilder addField(String name, String value, String contentType){
+            String part = getBoundary();
+            boundaryPrefix = '';
+            part += 'Content-Disposition: form-data; name="' + name + '"';
+            if(contentType != null){
+                part += '\nContent-Type: ' + contentType;
+            }
+            part += '\r\n\r\n';
+            part += value;
+
+            boundaryPrefix = '\r\n';
+
+            // if(encoded){
+            //     while(EncodingUtil.base64Encode(Blob.valueOf(part)).endsWith('=')){
+            //         part = part.replaceFirst('\r\n\r\n', ' \r\n\r\n');
+            //     }
+
+            //     part = EncodingUtil.base64Encode(Blob.valueOf(part));
+            // }
+
+            body += part;
+
+            return this;
+        }
+
+        // global MultipartBodyBuilder addFile(String name, String filename, Blob value){
+        //     return addFile(name, filename, 'application/octet-stream', value);
+        // }
+
+        // global MultipartBodyBuilder addFile(String name, String filename, String contentType, Blob value){
+        //     String part = getBoundary();
+        //     boundaryPrefix = '';
+        //     part += 'Content-Disposition: form-data; name="' + name + '"; filename="' + filename + '"';
+        //     part += '\nContent-Type: ' + contentType;
+
+        //     if(encoded){
+        //         while(EncodingUtil.base64Encode(Blob.valueOf(part + '\r\n\r\n')).endsWith('=')){
+        //             part += ' ';
+        //         }
+
+        //         body += EncodingUtil.base64Encode(Blob.valueOf(part));
+        //     }else{
+        //         body += '\r\nContent-Disposition: form-data; name="' + name + '"; filename="' + filename + '"';
+        //         while(EncodingUtil.base64Encode(body + '\r\n\r\n').endsWith('=')){
+        //             body += ' ';
+        //         }
+
+        //         encoded = true;
+        //         body = EncodingUtil.base64Encode(body + '\r\n\r\n');
+        //     }
+
+        //     String encodedValue = EncodingUtil.base64Encode(value);
+        //     if(encodedValue.endsWith('==')){
+        //         encodedValue = encodedValue.substringBeforeLast('==') + '0K';
+        //         boundaryPrefix = '';
+        //     }else if(encodedValue.endsWith('=')){
+        //         encodedValue = encodedValue.substringBeforeLast('=') + 'N';
+        //         boundaryPrefix = '\n';
+        //     }else{
+        //         boundaryPrefix = '\r\n';
+        //     }
+
+        //     body += encodedValue;
+
+        //     return this;
+        // }
+
+        global HttpRequestBuilder setMultipartBody(){
+            String finalBoundary = getBoundary(true);
+
+            // if(encoded){
+            //     return reqBuilder.body(EncodingUtil.base64Decode(body + encodeString(finalBoundary)));
+            // }else{
+                return reqBuilder.body(body + finalBoundary);
+            // }
+        }
+
+        private String getBoundary(){
+            return getBoundary(false);
+        }
+
+        private String getBoundary(Boolean isFinal){
+            String ending = isFinal ? '--' : '\n';
+            String boundary = boundaryPrefix + '--' + boundary + ending;
+            boundaryPrefix = '';
+            return boundary;
+        }
+
+        // private String encodeString(String s){
+        //     return EncodingUtil.base64Encode(Blob.valueOf(s));
+        // }
     }
 }
