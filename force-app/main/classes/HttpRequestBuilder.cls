@@ -106,17 +106,14 @@ global virtual class HttpRequestBuilder {
 
     global class MultipartBodyBuilder{
         private HttpRequestBuilder reqBuilder;
-        private String boundary;
-        private String body;
+        private String boundary = '-----x' + DateTime.now().getTime() + 'x-----';
+        private String body = '';
         private Boolean encoded = false;
         private String boundaryPrefix = '';
 
         private MultipartBodyBuilder(HttpRequestBuilder reqBuilder){
             this.reqBuilder = reqBuilder;
-            boundary = '----------' + DateTime.now().getTime();
             reqBuilder.header('Content-Type', 'multipart/form-data; boundary=' + boundary);
-
-            body = '';
         }
 
         global MultipartBodyBuilder addField(String name, String value){
@@ -125,81 +122,42 @@ global virtual class HttpRequestBuilder {
 
         global MultipartBodyBuilder addField(String name, String value, String contentType){
             String part = getBoundary();
-            boundaryPrefix = '';
             part += 'Content-Disposition: form-data; name="' + name + '"';
             if(contentType != null){
                 part += '\r\nContent-Type: ' + contentType;
             }
             part += '\r\n\r\n';
-            part += value;
 
-            boundaryPrefix = '\r\n';
-
-            // if(encoded){
-            //     while(EncodingUtil.base64Encode(Blob.valueOf(part)).endsWith('=')){
-            //         part = part.replaceFirst('\r\n\r\n', ' \r\n\r\n');
-            //     }
-
-            //     part = EncodingUtil.base64Encode(Blob.valueOf(part));
-            // }
-
-            body += part;
+            body += calculatePart(part, Blob.valueOf(value));
 
             return this;
         }
 
-        // global MultipartBodyBuilder addFile(String name, String filename, Blob value){
-        //     return addFile(name, filename, 'application/octet-stream', value);
-        // }
+        global MultipartBodyBuilder addFile(String name, String filename, Blob value){
+            return addFile(name, filename, 'application/octet-stream', value);
+        }
 
-        // global MultipartBodyBuilder addFile(String name, String filename, String contentType, Blob value){
-        //     String part = getBoundary();
-        //     boundaryPrefix = '';
-        //     part += 'Content-Disposition: form-data; name="' + name + '"; filename="' + filename + '"';
-        //     part += '\nContent-Type: ' + contentType;
+        global MultipartBodyBuilder addFile(String name, String filename, String contentType, Blob value){
+            String part = getBoundary();
+            part += 'Content-Disposition: form-data; name="' + name + '"; filename="' + filename + '"';
+            part += '\r\nContent-Type: ' + contentType + '\r\n\r\n';
 
-        //     if(encoded){
-        //         while(EncodingUtil.base64Encode(Blob.valueOf(part + '\r\n\r\n')).endsWith('=')){
-        //             part += ' ';
-        //         }
+            body += calculatePart(part, value);
 
-        //         body += EncodingUtil.base64Encode(Blob.valueOf(part));
-        //     }else{
-        //         body += '\r\nContent-Disposition: form-data; name="' + name + '"; filename="' + filename + '"';
-        //         while(EncodingUtil.base64Encode(body + '\r\n\r\n').endsWith('=')){
-        //             body += ' ';
-        //         }
-
-        //         encoded = true;
-        //         body = EncodingUtil.base64Encode(body + '\r\n\r\n');
-        //     }
-
-        //     String encodedValue = EncodingUtil.base64Encode(value);
-        //     if(encodedValue.endsWith('==')){
-        //         encodedValue = encodedValue.substringBeforeLast('==') + '0K';
-        //         boundaryPrefix = '';
-        //     }else if(encodedValue.endsWith('=')){
-        //         encodedValue = encodedValue.substringBeforeLast('=') + 'N';
-        //         boundaryPrefix = '\n';
-        //     }else{
-        //         boundaryPrefix = '\r\n';
-        //     }
-
-        //     body += encodedValue;
-
-        //     return this;
-        // }
+            return this;
+        }
 
         global HttpRequestBuilder setMultipartBody(){
             String finalBoundary = getBoundary(true);
 
 
             System.debug(body + finalBoundary);
-            // if(encoded){
-            //     return reqBuilder.body(EncodingUtil.base64Decode(body + encodeString(finalBoundary)));
-            // }else{
+            if(encoded){
+                //If encoded, the body is in base64 and NEVER ends with '=', allowing me to append directly.
+                return reqBuilder.body(EncodingUtil.base64Decode(body + encodeString(finalBoundary)));
+            }else{
                 return reqBuilder.body(body + finalBoundary);
-            // }
+            }
         }
 
         private String getBoundary(){
@@ -213,8 +171,41 @@ global virtual class HttpRequestBuilder {
             return boundary;
         }
 
-        // private String encodeString(String s){
-        //     return EncodingUtil.base64Encode(Blob.valueOf(s));
-        // }
+        private String calculatePart(String part, Blob value){
+            boundaryPrefix = '\r\n';
+
+            if(encoded){
+                String encodedPart;
+
+                do{
+                    encodedPart = encodeString(part);
+                    if(encodedPart.endsWith('=')){
+                        part = part.removeEnd('\r\n\r\n') + ' \r\n\r\n';
+                    }
+                }while(encodedPart.endsWith('='));
+
+                part = encodedPart;
+
+                String encodedValue = EncodingUtil.base64Encode(value);
+                if(encodedValue.endsWith('==')){
+                    encodedValue = encodedValue.substringBeforeLast('==') + '0K';
+                    boundaryPrefix = '';
+                }else if(encodedValue.endsWith('=')){
+                    encodedValue = encodedValue.substringBeforeLast('=') + 'N';
+                    boundaryPrefix = '\n';
+                }
+
+                part += encodedValue;
+
+            }else{
+                part += value.toString();
+            }
+
+            return part;
+        }
+
+        private String encodeString(String s){
+            return EncodingUtil.base64Encode(Blob.valueOf(s));
+        }
     }
 }
