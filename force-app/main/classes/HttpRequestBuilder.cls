@@ -113,9 +113,8 @@ global virtual class HttpRequestBuilder {
 
         private MultipartBodyBuilder(HttpRequestBuilder reqBuilder){
             this.reqBuilder = reqBuilder;
-
-            boundary = '-----xxx-----' + DateTime.now().getTime() + '-----xxx-----';
-            reqBuilder.header('ContentType', 'multipart/form-data; boundary=' + boundary);
+            boundary = '----------' + DateTime.now().getTime();
+            reqBuilder.header('Content-Type', 'multipart/form-data; boundary=' + boundary);
 
             body = '';
         }
@@ -129,7 +128,7 @@ global virtual class HttpRequestBuilder {
             boundaryPrefix = '';
             part += 'Content-Disposition: form-data; name="' + name + '"';
             if(contentType != null){
-                part += '\nContent-Type: ' + contentType;
+                part += '\r\nContent-Type: ' + contentType;
             }
             part += '\r\n\r\n';
             part += value;
@@ -194,6 +193,8 @@ global virtual class HttpRequestBuilder {
         global HttpRequestBuilder setMultipartBody(){
             String finalBoundary = getBoundary(true);
 
+
+            System.debug(body + finalBoundary);
             // if(encoded){
             //     return reqBuilder.body(EncodingUtil.base64Decode(body + encodeString(finalBoundary)));
             // }else{
@@ -206,7 +207,7 @@ global virtual class HttpRequestBuilder {
         }
 
         private String getBoundary(Boolean isFinal){
-            String ending = isFinal ? '--' : '\n';
+            String ending = isFinal ? '--' : '\r\n';
             String boundary = boundaryPrefix + '--' + boundary + ending;
             boundaryPrefix = '';
             return boundary;
