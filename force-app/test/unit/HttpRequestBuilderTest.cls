@@ -108,12 +108,51 @@ public with sharing class HttpRequestBuilderTest {
 
         Test.stopTest();
 
-        Assert.isTrue(req.getHeader('ContentType').contains('multipart/form-data; boundary='));
+        String contentType = req.getHeader('Content-Type');
+        Assert.isTrue(contentType.contains('multipart/form-data; boundary='));
+        String boundary = contentType.substringAfter('boundary=');
 
-        String body = req.getBody();
-        Assert.isTrue(body.startsWith('-------xxx'));
-        Assert.isTrue(body.contains('Content-Disposition: form-data; name="type"\r\n\r\nsampleType'));
-        Assert.isTrue(body.contains('Content-Disposition: form-data; name="value"\nContent-Type: application/json\r\n\r\n{}'));
-        Assert.isTrue(body.endsWith('xxx-------'));
+        String expBody = '--' + boundary + '\r\n';
+        expBody += 'Content-Disposition: form-data; name="type"\r\n\r\nsampleType\r\n';
+        expBody += '--' + boundary + '\r\n';
+        expBody += 'Content-Disposition: form-data; name="value"\r\nContent-Type: application/json\r\n\r\n{}\r\n';
+        expBody += '--' + boundary + '--';
+        Assert.areEqual(expBody, req.getBody());
+    }
+
+    @isTest
+    public static void requestMultiPart_Complex(){
+        HttpRequest req;
+
+        Test.startTest();
+
+        req = HttpRequestBuilder.init('POST')
+            .multipartBody()
+            .addFile('file00','noEqual',Blob.valueOf('Hello World!'))
+            .addFile('file','oneEqual','text/plain',Blob.valueOf('This is fun'))
+            .addFile('file3','twoEqual',Blob.valueOf('Goodbye World'))
+            .addField('value', '{}', 'application/json')
+            .setMultipartBody()
+            .build();
+
+        Test.stopTest();
+
+        String contentType = req.getHeader('Content-Type');
+        Assert.isTrue(contentType.contains('multipart/form-data; boundary='));
+        String boundary = contentType.substringAfter('boundary=');
+
+        String expBody = '--' + boundary + '\r\n';
+        //part has no injected space, value has no added boundary
+        expBody += 'Content-Disposition: form-data; name="file00"; filename="noEqual"\r\nContent-Type: application/octet-stream\r\n\r\nHello World!\r\n';
+        expBody += '--' + boundary + '\r\n';
+        //part has one injected space, value has \r added boundary
+        expBody += 'Content-Disposition: form-data; name="file"; filename="oneEqual"\r\nContent-Type: text/plain \r\n\r\nThis is fun\r\n';
+        expBody += '--' + boundary + '\r\n';
+        //part has two injected space, value has \r\n added boundary
+        expBody += 'Content-Disposition: form-data; name="file3"; filename="twoEqual"\r\nContent-Type: application/octet-stream  \r\n\r\nGoodbye World\r\n';
+        expBody += '--' + boundary + '\r\n';
+        expBody += 'Content-Disposition: form-data; name="value"\r\nContent-Type: application/json  \r\n\r\n{}\r\n';
+        expBody += '--' + boundary + '--';
+        Assert.areEqual(expBody, req.getBody());
     }
 }

@@ -139,6 +139,13 @@ global virtual class HttpRequestBuilder {
 
         global MultipartBodyBuilder addFile(String name, String filename, String contentType, Blob value){
             String part = getBoundary();
+
+            if(encoded == false){
+                encoded = true;
+                part = body + part;
+                body = '';
+            }
+
             part += 'Content-Disposition: form-data; name="' + name + '"; filename="' + filename + '"';
             part += '\r\nContent-Type: ' + contentType + '\r\n\r\n';
 
@@ -150,14 +157,18 @@ global virtual class HttpRequestBuilder {
         global HttpRequestBuilder setMultipartBody(){
             String finalBoundary = getBoundary(true);
 
+            System.debug(body);
 
-            System.debug(body + finalBoundary);
             if(encoded){
                 //If encoded, the body is in base64 and NEVER ends with '=', allowing me to append directly.
-                return reqBuilder.body(EncodingUtil.base64Decode(body + encodeString(finalBoundary)));
+                reqBuilder.body(EncodingUtil.base64Decode(body + encodeString(finalBoundary)));
             }else{
-                return reqBuilder.body(body + finalBoundary);
+                reqBuilder.body(body + finalBoundary);
             }
+
+            System.debug(reqBuilder.build().getBody());
+
+            return reqBuilder;
         }
 
         private String getBoundary(){
