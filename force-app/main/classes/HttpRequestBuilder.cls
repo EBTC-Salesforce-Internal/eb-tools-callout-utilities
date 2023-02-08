@@ -120,7 +120,7 @@ global virtual class HttpRequestBuilder {
             return addField(name, value, null);
         }
 
-        global MultipartBodyBuilder addField(String name, String value, String contentType){
+        global MultipartBodyBuilder addField(String name, String contentType, String value){
             String part = getBoundary();
             part += 'Content-Disposition: form-data; name="' + name + '"';
             if(contentType != null){
@@ -140,6 +140,8 @@ global virtual class HttpRequestBuilder {
         global MultipartBodyBuilder addFile(String name, String filename, String contentType, Blob value){
             String part = getBoundary();
 
+            //When the first file is added, we switch to a base64 encoded format.
+            //To make the switch, we will include the entire body up to now in the first encoding.
             if(encoded == false){
                 encoded = true;
                 part = body + part;
@@ -157,16 +159,12 @@ global virtual class HttpRequestBuilder {
         global HttpRequestBuilder setMultipartBody(){
             String finalBoundary = getBoundary(true);
 
-            System.debug(body);
-
             if(encoded){
                 //If encoded, the body is in base64 and NEVER ends with '=', allowing me to append directly.
                 reqBuilder.body(EncodingUtil.base64Decode(body + encodeString(finalBoundary)));
             }else{
                 reqBuilder.body(body + finalBoundary);
             }
-
-            System.debug(reqBuilder.build().getBody());
 
             return reqBuilder;
         }
@@ -183,6 +181,8 @@ global virtual class HttpRequestBuilder {
         }
 
         private String calculatePart(String part, Blob value){
+            //The default boundary prefix is \r\n, unless we need to include one of those characters
+            //in the encoding of the prior part to ensure an justified encoding (no trailing =).
             boundaryPrefix = '\r\n';
 
             if(encoded){
@@ -190,6 +190,7 @@ global virtual class HttpRequestBuilder {
 
                 do{
                     encodedPart = encodeString(part);
+                    //If a trailing =, pad the part headers with a space character until it does not.
                     if(encodedPart.endsWith('=')){
                         part = part.removeEnd('\r\n\r\n') + ' \r\n\r\n';
                     }
@@ -197,18 +198,20 @@ global virtual class HttpRequestBuilder {
 
                 part = encodedPart;
 
+                //Encode the value as base64. If trailing = exists, make the appropriate replacement.
                 String encodedValue = EncodingUtil.base64Encode(value);
                 if(encodedValue.endsWith('==')){
-                    encodedValue = encodedValue.substringBeforeLast('==') + '0K';
-                    boundaryPrefix = '';
+                    encodedValue = encodedValue.substringBeforeLast('==') + '0K'; //Equivalent to \r\n
+                    boundaryPrefix = ''; //Leave nothing to be prefixed on the next boundary
                 }else if(encodedValue.endsWith('=')){
-                    encodedValue = encodedValue.substringBeforeLast('=') + 'N';
-                    boundaryPrefix = '\n';
+                    encodedValue = encodedValue.substringBeforeLast('=') + 'N'; //Equivalent to \r
+                    boundaryPrefix = '\n'; //Leaves \n to be prefixed on the next boundary
                 }
 
                 part += encodedValue;
 
             }else{
+                //Its not encoded, so just append the value
                 part += value.toString();
             }
 

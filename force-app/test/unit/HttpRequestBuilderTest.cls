@@ -102,7 +102,7 @@ public with sharing class HttpRequestBuilderTest {
         req = HttpRequestBuilder.init('POST')
             .multipartBody()
             .addField('type','sampleType')
-            .addField('value', '{}', 'application/json')
+            .addField('value', 'application/json', '{}')
             .setMultipartBody()
             .build();
 
@@ -128,9 +128,9 @@ public with sharing class HttpRequestBuilderTest {
 
         req = HttpRequestBuilder.init('POST')
             .multipartBody()
-            .addFile('file00','noEqual',Blob.valueOf('Hello World!'))
-            .addFile('file','oneEqual','text/plain',Blob.valueOf('This is fun'))
-            .addFile('file3','twoEqual',Blob.valueOf('Goodbye World'))
+            .addFile('file00', 'noEqual', Blob.valueOf('Hello World!'))
+            .addFile('file', 'oneEqual', 'text/plain', Blob.valueOf('This is fun'))
+            .addFile('file3', 'twoEqual', Blob.valueOf('Goodbye World'))
             .addField('value', '{}', 'application/json')
             .setMultipartBody()
             .build();
@@ -151,6 +151,7 @@ public with sharing class HttpRequestBuilderTest {
         //part has two injected space, value has \r\n added boundary
         expBody += 'Content-Disposition: form-data; name="file3"; filename="twoEqual"\r\nContent-Type: application/octet-stream  \r\n\r\nGoodbye World\r\n';
         expBody += '--' + boundary + '\r\n';
+        //part has two injected spaces due to the encoding requirement
         expBody += 'Content-Disposition: form-data; name="value"\r\nContent-Type: application/json  \r\n\r\n{}\r\n';
         expBody += '--' + boundary + '--';
         Assert.areEqual(expBody, req.getBody());
