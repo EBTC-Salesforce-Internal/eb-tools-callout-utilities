@@ -117,7 +117,7 @@ global virtual class HttpRequestBuilder {
         }
 
         global MultipartBodyBuilder addField(String name, String value){
-            return addField(name, value, null);
+            return addField(name, null, value);
         }
 
         global MultipartBodyBuilder addField(String name, String contentType, String value){

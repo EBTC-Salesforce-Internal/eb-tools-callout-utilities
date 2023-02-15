@@ -131,7 +131,7 @@ public with sharing class HttpRequestBuilderTest {
             .addFile('file00', 'noEqual', Blob.valueOf('Hello World!'))
             .addFile('file', 'oneEqual', 'text/plain', Blob.valueOf('This is fun'))
             .addFile('file3', 'twoEqual', Blob.valueOf('Goodbye World'))
-            .addField('value', '{}', 'application/json')
+            .addField('value', 'application/json', '{}')
             .setMultipartBody()
             .build();
 
