@@ -156,4 +156,26 @@ public with sharing class HttpRequestBuilderTest {
         expBody += '--' + boundary + '--';
         Assert.areEqual(expBody, req.getBody());
     }
+
+    @isTest
+    public static void requestLogging(){
+        HttpRequestBuilder.enableLogging(new DefaultRequestLogger());
+
+        HttpRequest req = HttpRequestBuilder.get()
+            .endpoint('https://www.google.com')
+            .build();
+
+        HttpResponse resp = HttpResponseBuilder.init()
+            .statusCode(200)
+            .build();
+
+        new DefaultRequestLogger().log(req, resp);
+    }
+
+    @isTest
+    public static void verifyLoggingLevels(){
+        Assert.areEqual(LoggingLevel.ERROR, DefaultRequestLogger.getLoggingLevel(404));
+        Assert.areEqual(LoggingLevel.WARN, DefaultRequestLogger.getLoggingLevel(301));
+        Assert.areEqual(LoggingLevel.INFO, DefaultRequestLogger.getLoggingLevel(200));
+    }
 }

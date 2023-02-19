@@ -1,5 +1,6 @@
 global virtual class HttpRequestBuilder {
     private static Http httpService = new Http();
+    private static RequestLoggingInterface logger;
     private HttpRequest request;
 
     private String namedCredential;
@@ -32,6 +33,10 @@ global virtual class HttpRequestBuilder {
 
     global static HttpRequestBuilder init(String method){
         return new HttpRequestBuilder(method);
+    }
+
+    global static void enableLogging(RequestLoggingInterface logger){
+        HttpRequestBuilder.logger = logger;
     }
 
     global HttpRequestBuilder namedCredential(String namedCredential){
@@ -101,7 +106,11 @@ global virtual class HttpRequestBuilder {
     }
 
     global HttpResponse send(){
-        return httpService.send(request);
+        HttpResponse response = httpService.send(request);
+        if(logger != null){
+            logger.log(request, response);
+        }
+        return response;
     }
 
     global class MultipartBodyBuilder{

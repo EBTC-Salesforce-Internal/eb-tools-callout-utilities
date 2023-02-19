@@ -8,12 +8,12 @@ These utilities utilize method chaining as a way to increase the readability of 
 
 ## Installation
 
-A managed package version is available to install [here](https://login.salesforce.com/packaging/installPackage.apexp?p0=04t5G000004PzUoQAK).
+A managed package version is available to install [here](https://login.salesforce.com/packaging/installPackage.apexp?p0=04t5G000004PzVwQAK).
 
 To install via Salesforce DX, run the following command
 
 ```Command Line
-sfdx force:package:install -i 04t5G000004PzUoQAK -u <alias or username>
+sfdx force:package:install -i 04t5G000004PzVwQAK -u <alias or username>
 ```
 
 ## Usage
@@ -37,6 +37,10 @@ The `addField()` method takes a name, value (String) and (optionally) a content 
 The `addFile()` method takes a name, filename, value (Blob), and (optionally) content type. If no content type is provided, the default is `application/octet-stream`.
 
 Set the body back to the request by invoking `setMultipartBody()`. This will return the related HttpRequestBuilder instance.
+
+#### Request Logging
+
+The `RequestLoggingInterface` provides a programmatic hook to access the HttpRequest and HttpResponse objects. A default implementation of this interface is available in the `DefaultRequestLogger` class. In order to enable this functionality, invoke `enableLogging()` method with a `RequestLoggingInterface` instance.
 
 ### Mock Server
 
