@@ -18,6 +18,8 @@ public with sharing class MockServerComponentTest {
 
     @isTest
     public static void queuedResponse(){
+        HttpRequestBuilder.enableLogging(new DefaultRequestLogger());
+
         MockServer mockServer = MockServer.initQueued();
 
         mockServer.enqueue(HttpResponseBuilder.init().statusCode(200).build());

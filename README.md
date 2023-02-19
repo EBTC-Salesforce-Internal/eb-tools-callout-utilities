@@ -8,12 +8,12 @@ These utilities utilize method chaining as a way to increase the readability of 
 
 ## Installation
 
-A managed package version is available to install [here](https://login.salesforce.com/packaging/installPackage.apexp?p0=04t5G000004PzSEQA0).
+A managed package version is available to install [here](https://login.salesforce.com/packaging/installPackage.apexp?p0=04t5G000004PzVwQAK).
 
 To install via Salesforce DX, run the following command
 
 ```Command Line
-sfdx force:package:install -i 04t5G000004PzSEQA0 -u <alias or username>
+sfdx force:package:install -i 04t5G000004PzVwQAK -u <alias or username>
 ```
 
 ## Usage
@@ -27,6 +27,20 @@ Methods on the builder assign values to the method, headers, and body of the req
 Invoking `build()` will return the constructed HttpRequest.
 
 Invoking `send()` will execute the request against the remote server or mock and return the response.
+
+#### Multi-part Post Body
+
+Invoking `multipartBody()` configures the request to send the body as Form-Data. The appropriate Content-Type header is set with the calculated boundary value. The format of the boundary is `-----xUNIX_TIMESTAMPx-----`. The returned value is a MultipartBodyBuilder instance on which you can call methods to add fields or files.
+
+The `addField()` method takes a name, value (String) and (optionally) a content type.
+
+The `addFile()` method takes a name, filename, value (Blob), and (optionally) content type. If no content type is provided, the default is `application/octet-stream`.
+
+Set the body back to the request by invoking `setMultipartBody()`. This will return the related HttpRequestBuilder instance.
+
+#### Request Logging
+
+The `RequestLoggingInterface` provides a programmatic hook to access the HttpRequest and HttpResponse objects. A default implementation of this interface is available in the `DefaultRequestLogger` class. In order to enable this functionality, invoke `enableLogging()` method with a `RequestLoggingInterface` instance.
 
 ### Mock Server
 
