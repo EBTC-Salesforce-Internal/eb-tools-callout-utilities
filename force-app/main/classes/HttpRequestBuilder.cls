@@ -83,17 +83,23 @@ global virtual class HttpRequestBuilder {
     }
 
     global HttpRequestBuilder body(String value){
-        this.request.setBody(value);
+        if(value != null){
+            this.request.setBody(value);
+        }
         return this;
     }
 
     global HttpRequestBuilder body(Dom.Document value){
-        this.request.setBodyDocument(value);
+        if(value != null){
+            this.request.setBodyDocument(value);
+        }
         return this;
     }
 
     global HttpRequestBuilder body(Blob value){
-        this.request.setBodyAsBlob(value);
+        if(value != null){
+            this.request.setBodyAsBlob(value);
+        }
         return this;
     }
 

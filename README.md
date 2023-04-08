@@ -8,12 +8,12 @@ These utilities utilize method chaining as a way to increase the readability of 
 
 ## Installation
 
-A managed package version is available to install [here](https://login.salesforce.com/packaging/installPackage.apexp?p0=04t5G000004PzVwQAK).
+A managed package version is available to install [here](https://login.salesforce.com/packaging/installPackage.apexp?p0=04t5G000004PzdcQAC).
 
 To install via Salesforce DX, run the following command
 
-```Command Line
-sfdx force:package:install -i 04t5G000004PzVwQAK -u <alias or username>
+```
+sfdx package install -p 04t5G000004PzdcQAC -o <alias or username>
 ```
 
 ## Usage
