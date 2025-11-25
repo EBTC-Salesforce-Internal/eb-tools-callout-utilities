@@ -1,17 +1,27 @@
 {
-    "packageDirectories": [
-        {
-            "path": "force-app",
-            "default": true,
-            "package": "EB Tools - Callout Utilities",
-            "versionNumber": "0.1.0.NEXT"
-        }
-    ],
-    "name": "EB Tools - Callout Utilities",
-    "namespace": "ebtls",
-    "sfdcLoginUrl": "https://login.salesforce.com",
-    "sourceApiVersion": "57.0",
-    "packageAliases": {
-        "EB Tools - Callout Utilities": "0Ho5G000000fxXpSAI"
+  "packageDirectories": [
+    {
+      "path": "force-app",
+      "default": true
+    },
+    {
+      "path": "force-app/base",
+      "default": false,
+      "package": "EB Tools - Callout Utilities",
+      "versionNumber": "0.1.0.NEXT"
+    },
+    {
+      "path": "force-app/logging",
+      "default": false,
+      "package": "EB Tools - Callout Logging",
+      "versionNumber": "0.1.0.NEXT"
     }
+  ],
+  "name": "EB Tools - Callout Utilities",
+  "namespace": "ebtls",
+  "sfdcLoginUrl": "https://login.salesforce.com",
+  "sourceApiVersion": "57.0",
+  "packageAliases": {
+    "EB Tools - Callout Utilities": "0Ho5G000000fxXpSAI"
+  }
 }
