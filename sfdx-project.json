@@ -8,7 +8,8 @@
       "path": "force-app/base",
       "default": false,
       "package": "EB Tools - Callout Utilities",
-      "versionNumber": "0.1.0.NEXT"
+      "ancestorVersion": "0.1.0.10",
+      "versionNumber": "0.2.0.NEXT"
     },
     {
       "path": "force-app/logging",
@@ -19,7 +20,7 @@
       "versionDescription": "Adapter connecting EB Tools - Callout Utilities callout logging to EB Tools - Logging.",
       "dependencies": [
         {
-          "package": "EB Tools - Callout Utilities@0.1.0-10"
+          "package": "EB Tools - Callout Utilities@0.2.0-1"
         },
         {
           "package": "EB Tools - Logging@0.3.0-3"
@@ -37,6 +38,8 @@
     "EB Tools - Logging": "0HoUk00000000WHKAY",
     "EB Tools - Logging@0.3.0-3": "04tUk000002sN89IAE",
     "EB Tools - Callout Logging": "0HoUk00000001TxKAI",
-    "EB Tools - Callout Logging@0.1.0-1": "04tUk000002xbdVIAQ"
+    "EB Tools - Callout Logging@0.1.0-1": "04tUk000002xbdVIAQ",
+    "EB Tools - Callout Utilities@0.2.0-1": "04tUk000002xcbBIAQ",
+    "EB Tools - Callout Logging@0.1.0-2": "04tUk000002xccnIAA"
   }
 }

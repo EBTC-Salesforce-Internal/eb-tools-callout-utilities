@@ -173,6 +173,65 @@ public with sharing class HttpRequestBuilderTest {
     }
 
     @isTest
+    public static void redactsConfiguredHeadersAndTextBodies(){
+        HttpRequest request = new HttpRequest();
+        request.setEndpoint('https://example.com/path?access_token=one&%61ccess_token=two&view=full#section');
+        request.setBody('request token-123 and token-456');
+
+        HttpResponse response = new HttpResponse();
+        response.setStatusCode(200);
+        response.setHeader('Authorization', 'Bearer secret');
+        response.setBody('response token-789');
+
+        CalloutLogRedaction redaction = new CalloutLogRedaction()
+            .header('authorization')
+            .urlParameter('ACCESS_TOKEN')
+            .bodyPattern('token-[0-9]+');
+
+        new DefaultRequestLogger(redaction).log(request, response);
+
+        Assert.areEqual('[REDACTED]', redaction.redactHeaderValue('AUTHORIZATION', 'Bearer secret'));
+        Assert.areEqual('application/json', redaction.redactHeaderValue('Content-Type', 'application/json'));
+        Assert.areEqual('https://example.com/path?access_token=[REDACTED]&%61ccess_token=[REDACTED]&view=full#section', redaction.redactUrlParameters(request.getEndpoint()));
+        Assert.areEqual('plain body', redaction.redactBody('plain body'));
+        Assert.areEqual('request [REDACTED] and [REDACTED]', redaction.redactRequestBody(request));
+        Assert.areEqual('response [REDACTED]', redaction.redactResponseBody(response));
+        Assert.areEqual('request token-123 and token-456', request.getBody());
+        Assert.areEqual('response token-789', response.getBody());
+        Assert.areEqual('Bearer secret', response.getHeader('Authorization'));
+        Assert.areEqual('https://example.com/path?access_token=one&%61ccess_token=two&view=full#section', request.getEndpoint());
+    }
+
+    @isTest
+    public static void masksOpaqueBodies(){
+        HttpRequest request = new HttpRequest();
+        Blob requestBody = EncodingUtil.base64Decode('/w==');
+        request.setBodyAsBlob(requestBody);
+
+        HttpResponse response = new HttpResponse();
+        response.setStatusCode(200);
+        Blob responseBody = EncodingUtil.base64Decode('/w==');
+        response.setBodyAsBlob(responseBody);
+
+        CalloutLogRedaction redaction = new CalloutLogRedaction().bodyPattern('secret');
+
+        Assert.areEqual('[REDACTED]', redaction.redactRequestBody(request));
+        Assert.areEqual('[REDACTED]', redaction.redactResponseBody(response));
+        Assert.areEqual(requestBody, request.getBodyAsBlob());
+        Assert.areEqual(responseBody, response.getBodyAsBlob());
+    }
+
+    @isTest
+    public static void rejectsInvalidBodyPatterns(){
+        try {
+            new CalloutLogRedaction().bodyPattern('[');
+            Assert.fail('Expected an invalid regular expression to be rejected.');
+        } catch (Exception ex) {
+            Assert.isTrue(ex.getMessage() != null);
+        }
+    }
+
+    @isTest
     public static void verifyLoggingLevels(){
         Assert.areEqual(LoggingLevel.ERROR, DefaultRequestLogger.getLoggingLevel(404));
         Assert.areEqual(LoggingLevel.WARN, DefaultRequestLogger.getLoggingLevel(301));

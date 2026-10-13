@@ -4,23 +4,25 @@
 
 The EB Tools - Callout Utilities package provides helpers to streamline development and testing of Salesforce callouts. Its builders use method chaining to improve readability.
 
-An optional companion package adds structured event logging:
+An optional companion package adds structured event logging.
 
-| Package                           | Contents                                                                           | Install                                                                                                            |
-| --------------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| EB Tools - Callout Utilities      | Apex HTTP request/response builders, `MockServer`, and request-logging interfaces. | Version 0.1.0.10: [Install](https://login.salesforce.com/packaging/installPackage.apexp?p0=04t5G000004PzeBQAS)     |
-| EB Tools - Logging                | `LogHelper` APIs and the `Log_Event__e` platform event for structured logging.     | Version 0.3.0.3: [Install](https://login.salesforce.com/packaging/installPackage.apexp?p0=04tUk000002sN89IAE)      |
-| EB Tools - Callout Logging (beta) | Adapter connecting completed callouts to EB Tools - Logging.                       | Version 0.1.0.1 beta: [Install](https://login.salesforce.com/packaging/installPackage.apexp?p0=04tUk000002xbdVIAQ) |
+Choose one Callout Utilities lane. For structured callout logging, install Callout Utilities, EB Tools - Logging, then Callout Logging.
+
+| Package                      | Stable                                                                                                 | Beta                                                                                                         |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| EB Tools - Callout Utilities | 0.1.0.10: [Install](https://login.salesforce.com/packaging/installPackage.apexp?p0=04t5G000004PzeBQAS) | 0.2.0.1 (beta): [Install](https://login.salesforce.com/packaging/installPackage.apexp?p0=04tUk000002xcbBIAQ) |
+| EB Tools - Logging           | 0.3.0.3: [Install](https://login.salesforce.com/packaging/installPackage.apexp?p0=04tUk000002sN89IAE)  |                                                                                                              |
+| EB Tools - Callout Logging   | Not available                                                                                          | 0.1.0.2 (beta): [Install](https://login.salesforce.com/packaging/installPackage.apexp?p0=04tUk000002xccnIAA) |
+
+EB Tools - Logging is optional for basic callout utilities. The Callout Logging adapter does not have a stable release yet.
 
 ## Installation
 
-To install either package with Salesforce CLI, use its subscriber package version ID from the table above:
+To install a package with Salesforce CLI, use its subscriber package version ID from the table above:
 
 ```
 sf package install --package <subscriber-package-version-id> --target-org <alias or username>
 ```
-
-The Logging and Callout Logging packages are optional for basic callout utilities. To publish structured callout logs, install all three packages.
 
 ## Usage
 
@@ -48,15 +50,31 @@ Set the body back to the request by invoking `setMultipartBody()`. This will ret
 
 The `RequestLoggingInterface` provides a programmatic hook to access the HttpRequest and HttpResponse objects. A default implementation of this interface is available in the `DefaultRequestLogger` class. In order to enable this functionality, invoke `enableLogging()` method with a `RequestLoggingInterface` instance.
 
-`DefaultRequestLogger` writes the request method, endpoint, and body, plus the response status, headers, and body, to the Apex debug log. Do not enable it for callouts whose endpoints, payloads, or headers may contain sensitive data unless that exposure is acceptable. Implement `RequestLoggingInterface` to redact or route log details differently.
+`DefaultRequestLogger` writes the request method, endpoint, and body, plus the response status, headers, and body, to the Apex debug log. Redaction is opt-in and can be configured for the built-in loggers:
+
+```apex
+EBTLS.CalloutLogRedaction redaction = new EBTLS.CalloutLogRedaction()
+	.header('Authorization')
+	.header('Set-Cookie')
+	.urlParameter('access_token')
+	.bodyPattern('Bearer [A-Za-z0-9._-]+');
+
+EBTLS.HttpRequestBuilder.enableLogging(new EBTLS.DefaultRequestLogger(redaction));
+```
+
+Header names are matched case-insensitively and matching values become `[REDACTED]`. Each regex match in request and response text bodies becomes `[REDACTED]`. Bodies that cannot be represented byte-for-byte as text are masked entirely. Apex does not distinguish a UTF-8 Blob from an equivalent String, so those bodies follow the text regex rules. Redaction changes log output only, not the callout.
+
+Configured URL parameter names are matched case-insensitively in the query string, including percent-encoded names. Every matching value becomes `[REDACTED]`; other parameters and URL fragments are preserved.
+
+Implementations of `RequestLoggingInterface` outside the built-in loggers must apply their own redaction. The structured adapter can be configured the same way:
 
 To publish structured callout logs, install all three packages and enable the adapter before sending a request:
 
 ```apex
-EBTLS.HttpRequestBuilder.enableLogging(new EBTLS.CalloutLoggingAdapter());
+EBTLS.HttpRequestBuilder.enableLogging(new EBTLS.CalloutLoggingAdapter(redaction));
 ```
 
-The `CalloutLoggingAdapter` publishes a `Log_Event__e` event for each completed callout response through EB Tools - Logging. Events include request and response details; avoid logging sensitive payloads or headers unless that exposure is acceptable.
+The `CalloutLoggingAdapter` publishes a `Log_Event__e` event for each completed callout response through EB Tools - Logging. It redacts configured URL query parameters, response headers, and both bodies; EB Tools - Logging currently records a placeholder instead of request header values.
 
 ### Mock Server
 
