@@ -2,19 +2,25 @@
 
 ## Overview
 
-The EB Tools - Callout Utilities package provides helpful contructs to streamline development and testing of Salesforce callouts.
+The EB Tools - Callout Utilities package provides helpers to streamline development and testing of Salesforce callouts. Its builders use method chaining to improve readability.
 
-These utilities utilize method chaining as a way to increase the readability of code.
+An optional companion package adds structured event logging:
+
+| Package                           | Contents                                                                           | Install                                                                                                            |
+| --------------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| EB Tools - Callout Utilities      | Apex HTTP request/response builders, `MockServer`, and request-logging interfaces. | Version 0.1.0.10: [Install](https://login.salesforce.com/packaging/installPackage.apexp?p0=04t5G000004PzeBQAS)     |
+| EB Tools - Logging                | `LogHelper` APIs and the `Log_Event__e` platform event for structured logging.     | Version 0.3.0.3: [Install](https://login.salesforce.com/packaging/installPackage.apexp?p0=04tUk000002sN89IAE)      |
+| EB Tools - Callout Logging (beta) | Adapter connecting completed callouts to EB Tools - Logging.                       | Version 0.1.0.1 beta: [Install](https://login.salesforce.com/packaging/installPackage.apexp?p0=04tUk000002xbdVIAQ) |
 
 ## Installation
 
-A managed package version is available to install [here](https://login.salesforce.com/packaging/installPackage.apexp?p0=04t5G000004PzeBQAS).
-
-To install via Salesforce DX, run the following command
+To install either package with Salesforce CLI, use its subscriber package version ID from the table above:
 
 ```
-sfdx package install -p 04t5G000004PzeBQAS -o <alias or username>
+sf package install --package <subscriber-package-version-id> --target-org <alias or username>
 ```
+
+The Logging and Callout Logging packages are optional for basic callout utilities. To publish structured callout logs, install all three packages.
 
 ## Usage
 
@@ -42,6 +48,16 @@ Set the body back to the request by invoking `setMultipartBody()`. This will ret
 
 The `RequestLoggingInterface` provides a programmatic hook to access the HttpRequest and HttpResponse objects. A default implementation of this interface is available in the `DefaultRequestLogger` class. In order to enable this functionality, invoke `enableLogging()` method with a `RequestLoggingInterface` instance.
 
+`DefaultRequestLogger` writes the request method, endpoint, and body, plus the response status, headers, and body, to the Apex debug log. Do not enable it for callouts whose endpoints, payloads, or headers may contain sensitive data unless that exposure is acceptable. Implement `RequestLoggingInterface` to redact or route log details differently.
+
+To publish structured callout logs, install all three packages and enable the adapter before sending a request:
+
+```apex
+EBTLS.HttpRequestBuilder.enableLogging(new EBTLS.CalloutLoggingAdapter());
+```
+
+The `CalloutLoggingAdapter` publishes a `Log_Event__e` event for each completed callout response through EB Tools - Logging. Events include request and response details; avoid logging sensitive payloads or headers unless that exposure is acceptable.
+
 ### Mock Server
 
 The MockServer class is a universal implementation of HttpCalloutMock interface that allows the test to determine the behavior exhibited by the endpoint at runtime. It allows for more responsive testing as the test functionality is determined within the test definition instead of a separate class. Additionally, it captures the requests such that we can validate the construction and composition of the web request being sent out from Salesforce.
@@ -58,7 +74,7 @@ When in `QUEUE` mode, the MockServer will return the staged responses in a prede
 
 If no mock responses are available, a `MockServerException` will be thrown.
 
->This mode is useful in unit tests where the number of potential requests is limited (usually one, sometimes two) and responses vary greatly to accomodate the needs of the test.
+> This mode is useful in unit tests where the number of potential requests is limited (usually one, sometimes two) and responses vary greatly to accomodate the needs of the test.
 
 #### Match Mode
 
@@ -68,36 +84,36 @@ Request specs are created using the `whenRequest()` function chain to define req
 
 If a request doesn't meet the criteria of any of the RequestSpecs, a `MockServerException` is thrown. If a request meets the criteria of more than one RequestSpec, a `MockServerException` is thrown.
 
->This mode is useful in larger unit or regression testing scenarios. The MockServer can be initialized in the `@testSetup` method and persist across all tests in the test class without the need to set the response for each individual request.
+> This mode is useful in larger unit or regression testing scenarios. Initialize the MockServer and configure its responses inside each test method. `@testSetup` shares test records with test methods, but Apex static state and `Test.setMock()` registration do not persist between test methods.
 
 ##### RequestSpec
 
 The RequestSpec object has for properties that can be used to define criteria:
 
- * `method(String method)` - This method sets the appropriate method, always using an 'equal' operator.
- * `endpoint()` - Allows multiple conditions evaluated against the request endpoint.
- * `header(String headerName)` - Allows multiple conditions evaluated against the header defined as a parameter.
- * `body()` - Allows multiple conditions evaluated against the body of the request.
+- `method(String method)` - This method sets the appropriate method, always using an 'equal' operator.
+- `endpoint()` - Allows multiple conditions evaluated against the request endpoint.
+- `header(String headerName)` - Allows multiple conditions evaluated against the header defined as a parameter.
+- `body()` - Allows multiple conditions evaluated against the body of the request.
 
 Each of these specifications use string-based values, performing literal comparisons (no wildcards). Operations include:
 
- * Is Null/Not Null
- * Equal/Not Equal
- * Contains/Does Not Contain
- * Starts With/Does Not Start With
- * Ends With/Does Not End With
+- Is Blank/Not Blank (null, empty, and whitespace-only values are blank)
+- Equal/Not Equal
+- Contains/Does Not Contain
+- Starts With/Does Not Start With
+- Ends With/Does Not End With
 
 ##### ResponseSpec
 
 Upon invoked `thenReturn()` you are provided an instance of ResponseSpec. Invoking the methods inherited from the HttpResponseBuilder define the response. Methods include the following and function similar to those found on the [HttpResponse](https://developer.salesforce.com/docs/atlas.en-us.apexref.meta/apexref/apex_classes_restful_http_httpresponse.htm):
 
- * status(String status)
- * statusCode(Integer statusCode)
- * header(String headerName, String headerValue)
- * body(String body)
- * body(Blob body)
+- status(String status)
+- statusCode(Integer statusCode)
+- header(String headerName, String headerValue)
+- body(String body)
+- body(Blob body)
 
->There is no need for any further calls after the response is defined, the `thenReturn()` function registers the specifications with the MockSever.
+> There is no need for any further calls after the response is defined, the `thenReturn()` function registers the specifications with the MockSever.
 
 #### Take Request
 
@@ -105,11 +121,11 @@ To allow better testing of HttpRequests, the MockServer stores all requests made
 
 #### Clear and Reset Functions
 
-Because the MockServer acts as a singleton within the execution context, it is shared across all tests in a specific class. In order to prevent one test configuration from bleeding into another, it is best practice to either clear (empty the request list only) or reset (clears all staged configuration for both queue and match mode).
+Each test method has its own MockServer execution state. Within a test method, `clear()` removes captured requests only; `reset()` removes captured requests and staged queue/match responses while keeping the current operating mode.
 
 ## What are the EB Tools packages?
 
 The EB Tools packages are a collection of helpful components, utilities, and frameworks to promote use of best practices in Salesforce.com development and configuration.
 
- * [EDHU Trigger Framework](https://bitbucket.org/eidebailly/edhu)
- * [Dynamic Lookup Component](https://bitbucket.org/eidebailly/dynamiclookup2)
+- [EDHU Trigger Framework](https://bitbucket.org/eidebailly/edhu)
+- [Dynamic Lookup Component](https://bitbucket.org/eidebailly/dynamiclookup2)

@@ -14,7 +14,17 @@
       "path": "force-app/logging",
       "default": false,
       "package": "EB Tools - Callout Logging",
-      "versionNumber": "0.1.0.NEXT"
+      "versionNumber": "0.1.0.NEXT",
+      "versionName": "0.1",
+      "versionDescription": "Adapter connecting EB Tools - Callout Utilities callout logging to EB Tools - Logging.",
+      "dependencies": [
+        {
+          "package": "EB Tools - Callout Utilities@0.1.0-10"
+        },
+        {
+          "package": "EB Tools - Logging@0.3.0-3"
+        }
+      ]
     }
   ],
   "name": "EB Tools - Callout Utilities",
@@ -22,6 +32,11 @@
   "sfdcLoginUrl": "https://login.salesforce.com",
   "sourceApiVersion": "57.0",
   "packageAliases": {
-    "EB Tools - Callout Utilities": "0Ho5G000000fxXpSAI"
+    "EB Tools - Callout Utilities": "0HoUk00000000G9KAI",
+    "EB Tools - Callout Utilities@0.1.0-10": "04t5G000004PzeBQAS",
+    "EB Tools - Logging": "0HoUk00000000WHKAY",
+    "EB Tools - Logging@0.3.0-3": "04tUk000002sN89IAE",
+    "EB Tools - Callout Logging": "0HoUk00000001TxKAI",
+    "EB Tools - Callout Logging@0.1.0-1": "04tUk000002xbdVIAQ"
   }
 }
